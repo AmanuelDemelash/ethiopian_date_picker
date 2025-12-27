@@ -29,123 +29,58 @@ class EthiopianDateConverter {
   /// [date] - The Gregorian date to convert.
   ///
   /// Returns an instance of [EthiopianDate] representing the equivalent Ethiopian date.
+  /// Converts a Gregorian [DateTime] to an EthiopianDate.
   static EthiopianDate gregorianToEthiopian(DateTime date) {
-    // Constants for Ethiopian calendar
-    const int monthDays = 30;
+    int gy = date.year;
+    int gm = date.month;
+    int gd = date.day;
 
-    // Normalize the date to handle timezone differences
-    final normalizedDate = DateTime(date.year, date.month, date.day);
+    // Rule: Ethiopian Year (EY) = GY - 7 or 8 (accounting for the leap year)
+    int ey = gy - (gm >= 9 ? 7 : 8);
 
-    // Calculate the difference between Ethiopian and Gregorian calendars
-    int yearDiff = 8;
+    // Rule: Ethiopian Month (EM) = GM + 1 (adjust for Ethiopian month start)
+    int em = gm + 1;
 
-    // Calculate initial Ethiopian date
-    int year = normalizedDate.year - yearDiff;
+    // Rule: Ethiopian Day (ED) = GD
+    int ed = gd;
 
-    // Calculate days from Ethiopian New Year (September 11)
-    int newYearDay = 11;
-    DateTime ethiopianNewYear = DateTime(normalizedDate.year, 9, newYearDay);
-
-    // If date is before Ethiopian New Year, adjust year
-    if (normalizedDate.isBefore(ethiopianNewYear)) {
-      year = normalizedDate.year - yearDiff;
-    } else {
-      year = normalizedDate.year - yearDiff + 1;
+    // Rule: If Gregorian year is a leap year, subtract 1 day from the result
+    if (_isGregorianLeapYear(gy)) {
+      ed -= 1;
     }
 
-    // Calculate the month and day
-    int month;
-    int day;
-
-    // Month and day offset mapping for 2025 -> 2017
-    final monthOffsets = {
-      1: {'month': 5, 'offset': -8}, // January -> Tir (24 -> 16)
-      2: {'month': 6, 'offset': -8}, // February -> Yekatit
-      3: {'month': 7, 'offset': -7}, // March -> Megabit
-      4: {'month': 8, 'offset': -7}, // April -> Miyazia
-      5: {'month': 9, 'offset': -7}, // May -> Ginbot
-      6: {'month': 10, 'offset': -7}, // June -> Sene
-      7: {'month': 11, 'offset': -7}, // July -> Hamle
-      8: {'month': 12, 'offset': -8}, // August -> Nehase
-      9: {'month': 13, 'offset': -8}, // Early September -> Pagume
-      10: {'month': 2, 'offset': -10}, // October -> Tikimt
-      11: {'month': 3, 'offset': -9}, // November -> Hidar
-      12: {'month': 4, 'offset': -9}, // December -> Tahsas
-    };
-
-    if (normalizedDate.month == 9 && normalizedDate.day >= newYearDay) {
-      // After Ethiopian New Year in September
-      month = 1; // Meskerem
-      day = normalizedDate.day - 10;
-    } else {
-      var monthData = monthOffsets[normalizedDate.month]!;
-      month = monthData['month']!;
-      day = normalizedDate.day + monthData['offset']!;
+    // Handle em > 13 or ed <= 0 if necessary
+    if (em > 13) {
+      em = 1;
+      ey += 1;
     }
 
-    // Handle month overflow
-    if (day > monthDays) {
-      day -= monthDays;
-      month++;
-    }
-    // Handle negative days
-    if (day <= 0) {
-      month--;
-      day += monthDays;
-    }
-
-    // Handle Pagume
-    if (month == 13) {
-      int maxDays = _isGregorianLeapYear(year) ? 6 : 5;
-      if (day > maxDays) {
-        day = maxDays;
-      }
-    }
-
-    return EthiopianDate(year, month, day);
-  }
-
-  /// Converts an Ethiopian date to a Julian Day Number (JDN).
-  ///
-  /// [year] - The Ethiopian year.
-  /// [month] - The Ethiopian month.
-  /// [day] - The Ethiopian day.
-  ///
-  /// Returns the Julian Day Number corresponding to the Ethiopian date.
-  static int _ethiopianToJDN(int year, int month, int day) {
-    return 1723856 + 365 * (year - 1) + (year ~/ 4) + 30 * (month - 1) + day;
+    return EthiopianDate(ey, em, ed);
   }
 
   /// Converts an Ethiopian date to a Gregorian [DateTime].
-  ///
-  /// [year] - The Ethiopian year.
-  /// [month] - The Ethiopian month.
-  /// [day] - The Ethiopian day.
-  ///
-  /// Returns a [DateTime] object representing the equivalent Gregorian date.
   static DateTime ethiopianToGregorian(int year, int month, int day) {
-    int jdn = _ethiopianToJDN(year, month, day);
-    return _jdnToGregorian(jdn);
-  }
+    // Rule: Gregorian Year (GY) = EY + 7 or 8 (accounting for the leap year)
+    int gy = year + (month <= 4 ? 7 : 8);
 
-  /// Converts a Julian Day Number (JDN) to a Gregorian [DateTime].
-  ///
-  /// [jdn] - The Julian Day Number to convert.
-  ///
-  /// Returns a [DateTime] object representing the corresponding Gregorian date.
-  static DateTime _jdnToGregorian(int jdn) {
-    int l = jdn + 68569;
-    int n = (4 * l) ~/ 146097;
-    l = l - ((146097 * n + 3) ~/ 4);
-    int i = (4000 * (l + 1)) ~/ 1461001;
-    l = l - ((1461 * i) ~/ 4) + 31;
-    int j = (80 * l) ~/ 2447;
-    int day = l - ((2447 * j) ~/ 80);
-    l = j ~/ 11;
-    int month = j + 2 - (12 * l);
-    int year = 100 * (n - 49) + i + l;
+    // Rule: Gregorian Month (GM) = EM - 1 (adjust for Ethiopian month start)
+    int gm = month - 1;
 
-    return DateTime(year, month, day);
+    // Rule: Gregorian Day (GD) = ED
+    int gd = day;
+
+    // Rule: If Ethiopian year is a leap year, add 1 day to the result
+    if (year % 4 == 3) {
+      gd += 1;
+    }
+
+    // Handle month adjustment if gm becomes 0
+    if (gm == 0) {
+      gm = 12;
+      gy -= 1;
+    }
+
+    return DateTime(gy, gm, gd);
   }
 
   // ignore: unused_element

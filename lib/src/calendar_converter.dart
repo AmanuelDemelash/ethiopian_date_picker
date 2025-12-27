@@ -1,90 +1,56 @@
 class CalendarConverter {
-  static const int _ethiopianEpoch = 1723856;
-
   /// Converts a Gregorian [DateTime] to Ethiopian [year, month, day]
   static List<int> toEthiopian(DateTime gDate) {
-    int jd = _gregorianToJD(gDate.year, gDate.month, gDate.day);
-    List<int> eth = _jdToEthiopian(jd);
+    int gy = gDate.year;
+    int gm = gDate.month;
+    int gd = gDate.day;
 
-    // Correct year if before Ethiopian New Year (Sep 11 or Sep 12)
-    DateTime newYear =
-        DateTime(gDate.year, 9, _isGregorianLeapYear(gDate.year) ? 12 : 11);
-    // if (gDate.isBefore(newYear)) {
-    //   eth[0] -= 1; // subtract a year
-    // }
-    final int calculatedEthYear =
-        (gDate.month > 9 || (gDate.month == 9 && gDate.day >= newYear.day))
-            ? (gDate.year - 7)
-            : (gDate.year - 8);
+    // Rule: Ethiopian Year (EY) = GY - 7 or 8 (accounting for the leap year)
+    // Simplified rule: Jan-Aug: -8, Sep-Dec: -7
+    int ey = gy - (gm >= 9 ? 7 : 8);
 
-    eth[0] = calculatedEthYear;
+    // Rule: Ethiopian Month (EM) = GM + 1 (adjust for Ethiopian month start)
+    int em = gm + 1;
 
-    return eth;
+    // Rule: Ethiopian Day (ED) = GD
+    int ed = gd;
+
+    // Rule: If Gregorian year is a leap year, subtract 1 day from the result
+    if (_isGregorianLeapYear(gy)) {
+      ed -= 1;
+    }
+
+    return [ey, em, ed];
   }
 
   static bool _isGregorianLeapYear(int year) {
     return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
   }
 
+  /// Converts an Ethiopian date to a Gregorian [DateTime]
   static DateTime toGregorian(int year, int month, int day) {
-    int jd = _ethiopianToJD(year, month, day);
-    DateTime gDate = _jdToGregorian(jd);
+    // Rule: Gregorian Year (GY) = EY + 7 or 8 (accounting for the leap year)
+    // Applying inverse logic: month 1-4 (+7), month 5-13 (+8)
+    int gy = year + (month <= 4 ? 7 : 8);
 
-    // Ethiopian year starts in Sep, so Meskerem (month 1) is in Sep of previous Gregorian year
-    // If Ethiopian month is 1–4 (roughly Sep–Dec), adjust forward if needed
-    if (month <= 4 && gDate.month < 9) {
-      gDate = DateTime(gDate.year + 1, gDate.month, gDate.day);
+    // Rule: Gregorian Month (GM) = EM - 1 (adjust for Ethiopian month start)
+    int gm = month - 1;
+
+    // Rule: Gregorian Day (GD) = ED
+    int gd = day;
+
+    // Rule: If Ethiopian year is a leap year, add 1 day to the result
+    // Assuming Ethiopian leap year is year % 4 == 3
+    if (year % 4 == 3) {
+      gd += 1;
     }
 
-    return gDate;
-  }
-  // -------------------------------
-  // Internal: Julian Day converters
-  // -------------------------------
+    // Handle month adjustment if gm becomes 0 (Dec of previous year)
+    if (gm == 0) {
+      gm = 12;
+      gy -= 1;
+    }
 
-  /// Gregorian to Julian Day
-  static int _gregorianToJD(int year, int month, int day) {
-    int a = ((14 - month) ~/ 12);
-    int y = year + 4800 - a;
-    int m = month + 12 * a - 3;
-    return day +
-        ((153 * m + 2) ~/ 5) +
-        365 * y +
-        (y ~/ 4) -
-        (y ~/ 100) +
-        (y ~/ 400) -
-        32045;
-  }
-
-  /// Julian Day to Gregorian
-  static DateTime _jdToGregorian(int jd) {
-    int a = jd + 32044;
-    int b = ((4 * a + 3) ~/ 146097);
-    int c = a - ((b * 146097) ~/ 4);
-    int d = ((4 * c + 3) ~/ 1461);
-    int e = c - ((1461 * d) ~/ 4);
-    int m = ((5 * e + 2) ~/ 153);
-
-    int day = e - ((153 * m + 2) ~/ 5) + 1;
-    int month = m + 3 - 12 * (m ~/ 10);
-    int year = b * 100 + d - 4800 + (m ~/ 10);
-
-    return DateTime(year, month, day);
-  }
-
-  static int _ethiopianToJD(int year, int month, int day) {
-    int jd =
-        _gregorianToJD(year + 7, 9, 11); // Ethiopian year starts on Sep 11 (GC)
-    return jd + 30 * (month - 1) + (day - 1);
-  }
-
-  /// Julian Day to Ethiopian
-  static List<int> _jdToEthiopian(int jd) {
-    int r = (jd - _ethiopianEpoch) % 1461;
-    int n = (r % 365) + 365 * (r ~/ 1460);
-    int year = 4 * ((jd - _ethiopianEpoch) ~/ 1461) + (r ~/ 365) + 1;
-    int month = (n ~/ 30) + 1;
-    int day = (n % 30) + 1;
-    return [year, month, day];
+    return DateTime(gy, gm, gd);
   }
 }
