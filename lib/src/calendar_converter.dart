@@ -27,16 +27,9 @@ class CalendarConverter {
   }
 
   static DateTime toGregorian(int year, int month, int day) {
-    int jd = _ethiopianToJD(year, month, day);
-    DateTime gDate = _jdToGregorian(jd);
-
-    // Ethiopian year starts in Sep, so Meskerem (month 1) is in Sep of previous Gregorian year
-    // If Ethiopian month is 1–4 (roughly Sep–Dec), adjust forward if needed
-    if (month <= 4 && gDate.month < 9) {
-      gDate = DateTime(gDate.year + 1, gDate.month, gDate.day);
-    }
-
-    return gDate;
+    // The library's internal JD calculation is offset by one year relative to EC
+    int jd = _ethiopianToJD(year + 1, month, day);
+    return _jdToGregorian(jd);
   }
   // -------------------------------
   // Internal: Julian Day converters
@@ -73,9 +66,11 @@ class CalendarConverter {
   }
 
   static int _ethiopianToJD(int year, int month, int day) {
-    int jd =
-        _gregorianToJD(year + 7, 9, 11); // Ethiopian year starts on Sep 11 (GC)
-    return jd + 30 * (month - 1) + (day - 1);
+    return (_ethiopianEpoch - 1) +
+        365 * (year - 1) +
+        ((year - 1) ~/ 4) +
+        30 * (month - 1) +
+        day;
   }
 
   /// Julian Day to Ethiopian
