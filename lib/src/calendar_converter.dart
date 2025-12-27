@@ -1,5 +1,3 @@
-import 'package:ethiopian_date_picker/ethiopian_date_picker.dart';
-
 class CalendarConverter {
   static const int _ethiopianEpoch = 1723856;
 
@@ -38,11 +36,7 @@ class CalendarConverter {
       gDate = DateTime(gDate.year + 1, gDate.month, gDate.day);
     }
 
-    //return gDate;
-    print("//////////////");
-    print("year: $year, month: $month, day: $day");
-    print(EthiopianDateConverter.ethiopianToGregorian(year, month, day));
-    return EthiopianDateConverter.ethiopianToGregorian(year, month, day);
+    return gDate;
   }
   // -------------------------------
   // Internal: Julian Day converters
