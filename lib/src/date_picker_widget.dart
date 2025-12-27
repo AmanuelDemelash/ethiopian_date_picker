@@ -6,7 +6,7 @@ import 'ethiopian_date.dart';
 import 'calendar_converter.dart';
 import 'calendar_grid.dart';
 import 'header.dart';
-import 'localization_data.dart'; // Import the new localization data
+// Import the new localization data
 
 class EthiopianDatePicker extends StatefulWidget {
   final dynamic initialDate;
