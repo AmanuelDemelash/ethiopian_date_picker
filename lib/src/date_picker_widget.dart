@@ -140,6 +140,8 @@ Future<DateTime?> showEthiopianDatePicker({
                 // );
                 final greg = EthiopianDateConverter.ethiopianToGregorian(
                     selected.year, selected.month, selected.day);
+                print("//////////////");
+                print(greg);
                 Navigator.of(dialogContext).pop(greg);
               } else {
                 Navigator.of(dialogContext).pop();
