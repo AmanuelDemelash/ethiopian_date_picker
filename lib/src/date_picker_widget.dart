@@ -1,5 +1,6 @@
 // lib/src/ethiopian_date_picker.dart
 
+import 'package:ethiopian_date_picker/ethiopian_date_picker.dart';
 import 'package:flutter/material.dart';
 import 'ethiopian_date.dart';
 import 'calendar_converter.dart';
@@ -132,11 +133,13 @@ Future<DateTime?> showEthiopianDatePicker({
             onPressed: () {
               final selected = selectedDateNotifier.value;
               if (selected != null) {
-                final greg = CalendarConverter.toGregorian(
-                  selected.year,
-                  selected.month,
-                  selected.day,
-                );
+                // final greg = CalendarConverter.toGregorian(
+                //   selected.year,
+                //   selected.month,
+                //   selected.day,
+                // );
+                final greg = EthiopianDateConverter.ethiopianToGregorian(
+                    selected.year, selected.month, selected.day);
                 Navigator.of(dialogContext).pop(greg);
               } else {
                 Navigator.of(dialogContext).pop();
