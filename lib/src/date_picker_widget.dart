@@ -133,15 +133,11 @@ Future<DateTime?> showEthiopianDatePicker({
             onPressed: () {
               final selected = selectedDateNotifier.value;
               if (selected != null) {
-                // final greg = CalendarConverter.toGregorian(
-                //   selected.year,
-                //   selected.month,
-                //   selected.day,
-                // );
-                final greg = EthiopianDateConverter.ethiopianToGregorian(
-                    selected.year, selected.month, selected.day);
-                print("//////////////");
-                print(greg);
+                final greg = CalendarConverter.toGregorian(
+                  selected.year,
+                  selected.month,
+                  selected.day,
+                );
                 Navigator.of(dialogContext).pop(greg);
               } else {
                 Navigator.of(dialogContext).pop();
